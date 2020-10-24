@@ -85,7 +85,7 @@ esp_err_t i2c_read_reg(i2c_port_t i2c_num,
 	return ret;
 }
 
-esp_err_t i2c_master_write_slave_reg(i2c_port_t i2c_num,
+esp_err_t i2c_write_reg(i2c_port_t i2c_num,
 	uint8_t i2c_addr, uint8_t i2c_reg, uint8_t* data_wr, size_t size)
 {
 	i2c_cmd_handle_t cmd;
