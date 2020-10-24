@@ -42,26 +42,76 @@
  * Pavel Nadein <pavelnadein@gmail.com>
  */
 
-#ifndef __I2C_H__
-#define __I2C_H__
+#include <esp32_spi.h>
 
-#ifdef __cplusplus
- extern "C" {
-#endif
+esp_err_t spi_bus_init(spi_host_device_t dev, int msck, int mosi, int miso)
+{
+	spi_bus_config_t buscfg = {
+		.sclk_io_num = msck,
+		.mosi_io_num = mosi,
+		.miso_io_num = miso,
+	};
 
-#include <stdint.h>
-#include <driver/i2c.h>
-
-esp_err_t i2c_init(i2c_port_t i2c_num, int sda, int scl, uint32_t freq);
-
-esp_err_t i2c_read_reg(i2c_port_t i2c_num,
-	uint8_t i2c_addr, uint8_t i2c_reg, uint8_t* data_rd, size_t size);
-
-esp_err_t i2c_write_reg(i2c_port_t i2c_num,
-	uint8_t i2c_addr, uint8_t i2c_reg, uint8_t* data_wr, size_t size);
-
-#ifdef __cplusplus
+	return spi_bus_initialize(dev, &buscfg, 0);
 }
-#endif
 
-#endif /* __I2C_H__ */
+esp_err_t spi_init(spi_host_device_t dev, spi_device_handle_t *handle,
+	int freq, uint8_t mode, uint8_t addr_w)
+{
+	spi_device_interface_config_t devcfg = {
+		.address_bits = addr_w ? addr_w : 1,
+		.queue_size = 2,
+		.clock_speed_hz = freq,
+	};
+
+	return spi_bus_add_device(dev, &devcfg, handle);
+}
+
+esp_err_t spi_deinit(spi_device_handle_t *handle)
+{
+	return spi_bus_remove_device(*handle);
+}
+
+esp_err_t spi_write_reg(spi_device_handle_t *handle, gpio_num_t cs,
+	uint8_t reg, uint8_t *data, uint16_t size)
+{
+	spi_transaction_t t = {
+		.flags = 0,
+		.addr = reg,
+		.length = size * 8,
+		.tx_buffer = data,
+	};
+	esp_err_t ret;
+
+	ret = gpio_set_level(cs, 0);
+	if (ret)
+		return ret;
+
+	ret = spi_device_transmit(*handle, &t);
+
+	gpio_set_level(cs, 1);
+
+	return ret;
+}
+
+esp_err_t spi_read_reg(spi_device_handle_t *handle, gpio_num_t cs,
+	uint8_t reg, uint8_t *data, uint16_t size)
+{
+	spi_transaction_t t = {
+		.flags = 0,
+		.addr = reg,
+		.length = size * 8,
+		.rx_buffer = data,
+	};
+	esp_err_t ret;
+
+	ret = gpio_set_level(cs, 0);
+	if (ret)
+		return ret;
+
+	ret = spi_device_transmit(*handle, &t);
+
+	gpio_set_level(cs, 1);
+
+	return ret;
+}

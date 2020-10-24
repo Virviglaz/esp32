@@ -42,26 +42,33 @@
  * Pavel Nadein <pavelnadein@gmail.com>
  */
 
-#ifndef __I2C_H__
-#define __I2C_H__
+#ifndef __SPI_H__
+#define __SPI_H__
 
 #ifdef __cplusplus
  extern "C" {
 #endif
 
 #include <stdint.h>
-#include <driver/i2c.h>
+#include <driver/spi_master.h>
+#include <driver/spi_common.h>
+#include <driver/gpio.h>
 
-esp_err_t i2c_init(i2c_port_t i2c_num, int sda, int scl, uint32_t freq);
+esp_err_t spi_bus_init(spi_host_device_t dev, int msck, int mosi, int miso);
 
-esp_err_t i2c_read_reg(i2c_port_t i2c_num,
-	uint8_t i2c_addr, uint8_t i2c_reg, uint8_t* data_rd, size_t size);
+esp_err_t spi_init(spi_host_device_t dev, spi_device_handle_t *handle,
+	int freq, uint8_t mode, uint8_t addr_w);
 
-esp_err_t i2c_write_reg(i2c_port_t i2c_num,
-	uint8_t i2c_addr, uint8_t i2c_reg, uint8_t* data_wr, size_t size);
+esp_err_t spi_deinit(spi_device_handle_t *handle);
+
+esp_err_t spi_write_reg(spi_device_handle_t *handle, gpio_num_t cs,
+	uint8_t reg, uint8_t *data, uint16_t size);
+
+esp_err_t spi_read_reg(spi_device_handle_t *handle, gpio_num_t cs,
+	uint8_t reg, uint8_t *data, uint16_t size);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __I2C_H__ */
+#endif /* __SPI_H__ */
